@@ -1,6 +1,6 @@
 
 import pandas as pd
-
+import tkinter as T
 import math
 
 
@@ -17,6 +17,7 @@ fretboard=[["E4","F4","F#4","G4","G#4","A4","A#4","B4","C5", "C#5", "D5", "D#5",
 ["D3", "D#3", "E3", "F3", "F#3","G3", "G#3", "A3", "A#3", "B3","C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4","C5", "C#5", "D5"],
 ["A2", "A#2", "B2","C3", "C#3","D3", "D#3", "E3", "F3", "F#3","G3", "G#3", "A3", "A#3", "B3","C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4"],
 ["E2", "F2", "F#2","G2", "G#2", "A2", "A#2", "B2","C3", "C#3","D3", "D#3", "E3", "F3", "F#3","G3", "G#3", "A3", "A#3", "B3","C4","C#4","D4","D#4","E4"]]
+version=0
 def run(csvFile):
 	#an algorithm that recieves a frequency and returns the musical note affiliated (string)
 	def pitch(freq):
@@ -97,12 +98,49 @@ def run(csvFile):
 			 
 			for string in range(6):
 				if string==i[0]:
-					print(i[1]) ,
+					print(i[1], end=' ') ,
 				else:
-					print ("|"),
-			print
+					print ("|", end= ' '),
+			print()
+		canvas.delete("all")
+		strings=['e','B','G','D','A','E']
+		stepSizeX=(canvas.winfo_width()-10)/(goodReadings.shape[0]*3+1) #takes width of canvas -5px from each side, then divides it int# of tabs times 3 bc each note displayed needs two units for left/right padding and one to make line, also plus one extra bin for the right padding after string name
+		stepSizeY=(canvas.winfo_height()-20)/6
+		currY=10
+		for string in range(6):
+			currX=5
+			lineW=0
+			canvas.create_text(currX, currY, text=strings[string])
+			currX+=stepSizeX
+			for i in goodReadings['Tab']:
+				if i[0] == string:
+					canvas.create_line(currX,currY, currX+lineW, currY)
+					currX+=lineW
+					canvas.create_text(currX+stepSizeX,currY, text=i[1])
+					currX+=stepSizeX*2
+					lineW=stepSizeX
+				else:
+					lineW+=stepSizeX*3
+			canvas.create_line(currX,currY, currX+lineW, currY)
+
+			currY+=stepSizeY
+
+
+
+		
 	def truncate():
 		return goodReadings.loc[goodReadings['Note'].shift()!=goodReadings['Note']]
+
+	#the nature of the fretboard allows for many different ways to play a riff, this section displays a few of those
+	def getNext(goodReadings, command):
+		global version
+		version= version +command
+		tabs=findTabs()
+		goodReadings['Tab']=tabs
+		print(goodReadings)
+		display()
+		
+		
 
 	goodReadings=pd.read_csv(csvFile)
 
@@ -110,18 +148,23 @@ def run(csvFile):
 	goodReadings=goodReadings[goodReadings['confidence']>0.6]
 	pitches=findPitches()
 	goodReadings['Note']=pitches
+	goodReadings=truncate()
+	tabMaster=T.Tk()
+	tabMaster.geometry("500x100")
+	
+	canvas=T.Canvas(tabMaster, height=200, width=500, bg="#ffffaa")
 
-	#the nature of the fretboard allows for many different ways to play a riff, this section displays a few of those
-	version=0
-	next="next"
-	while next=="next" or next=="Next":
-		tabs=findTabs()
-		goodReadings['Tab']=tabs
-		goodReadings=truncate()
-		print(goodReadings)
-		display()
-		next=input("Type next for another tablature: ")
-		version+=1
+	canvas.pack(fill=T.BOTH, expand=1)
+	buttons=T.Frame(tabMaster)
+	buttons.pack()
+	prevBtn=T.Button(buttons, text="Previous Tab", fg="white", bg="orange", command=lambda: getNext(goodReadings, -1) )
+	prevBtn.pack()
+	nextBtn=T.Button(buttons, text="Next Tab", fg="white", bg="green", command=lambda: getNext(goodReadings, 1) )
+	nextBtn.pack()
+	
+	
+	
+		
 
 
 

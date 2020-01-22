@@ -28,8 +28,13 @@ def record():
 	
 		
 def showTab():
-	crepe.process_file("./savedRecordings/"+lb.get(lb.curselection()), output="csvFiles",viterbi=True)
-	analyze.run("./csvFiles/"+lb.get(lb.curselection())[:-3]+"f0.csv")
+	try:
+		analyze.run("./csvFiles/"+lb.get(lb.curselection())[:-3]+"f0.csv")
+	except:
+		crepe.process_file("./savedRecordings/"+lb.get(lb.curselection()), output="csvFiles",viterbi=True)
+		analyze.run("./csvFiles/"+lb.get(lb.curselection())[:-3]+"f0.csv")
+	
+	
 	
 
 def playRec():
